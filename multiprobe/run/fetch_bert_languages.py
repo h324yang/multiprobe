@@ -2,6 +2,7 @@ import re
 
 import requests
 
+
 def main():
     bert_url = 'https://raw.githubusercontent.com/google-research/bert/master/multilingual.md'
     content = requests.get(bert_url).content.decode()
