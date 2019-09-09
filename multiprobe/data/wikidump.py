@@ -33,7 +33,7 @@ class WikipediaPage(object):
         self.text = self.root.find('revision').find('text').text
         self.title = self.root.find('title').text
         self.id = int(self.root.find('id').text)
-        self.raw_text = etree.tostring(self.root)
+        self.raw_text = etree.tostring(self.root).decode()
 
     @property
     def clean_text(self):
@@ -81,6 +81,11 @@ class WikipediaIndex(object):
                 prev_offset = index_info.offset
         return cls(path, language, page_name_map, page_id_map, slice_map, slice_next_map)
 
+    def save(self, filename=None):
+        if filename is None: filename = self.path
+        with open(filename + '.pkl', 'wb') as f:
+            pickle.dump(self, f)
+
     def find(self, page_id=None, page_name=None):
         if page_id is not None:
             return self.page_id_map[page_id]
@@ -117,8 +122,11 @@ class WikipediaLoader(object):
                 f.seek(offset - base, 1)
                 next_slice_offset = self.index.next_slice(offset)
                 data = f.read(next_slice_offset - offset) if next_slice_offset > 0 else f.read()
-                base += len(data)
-                yield parse_chunk(bz2.BZ2File(BytesIO(data)).read().decode())
+                base = offset + len(data)
+                try:
+                    yield parse_chunk(bz2.BZ2File(BytesIO(data)).read().decode())
+                except EOFError:
+                    return
 
     def load_single(self, **kwargs):
         info = self.index.find(**kwargs)
@@ -126,3 +134,11 @@ class WikipediaLoader(object):
         for page in pages:
             if page.title == kwargs.get('page_name') or page.id == kwargs.get('page_id'):
                 return page
+
+    def load_batch(self, index_infos):
+        offsets = [info.offset for info in index_infos]
+        page_ids = set([info.page_id for info in index_infos])
+        pages = []
+        for chunk in self.load_batch_slices(offsets):
+            pages.extend(list(filter(lambda x: x.id in page_ids, chunk)))
+        return pages
