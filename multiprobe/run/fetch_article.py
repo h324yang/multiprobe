@@ -1,6 +1,6 @@
 import argparse
 
-from multiprobe.data.wikipedia import WikipediaIndex, WikipediaLoader
+from multiprobe.data.wikidump import WikipediaIndex, WikipediaLoader
 
 
 def main():
@@ -11,7 +11,7 @@ def main():
     args = parser.parse_args()
 
     index = WikipediaIndex.from_dir(args.data_dir, args.language, use_tqdm=True)
-    print(WikipediaLoader(index).load_single(page_name=args.name).clean_text)
+    print(WikipediaLoader(index).load_single(page_name=args.name).raw_text)
 
 
 if __name__ == '__main__':

@@ -1,8 +1,9 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Dict, List
+from typing import Dict, List, Optional
 import bz2
+import pickle
 import re
 import os
 
@@ -16,6 +17,12 @@ class IndexInfo(object):
     page_name: str
     page_id: int
     offset: int
+    entity_id: Optional[str]
+
+
+@dataclass
+class WikipediaPagePropertyDatabase(object):
+    sqlite_filename: str
 
 
 @dataclass
@@ -26,6 +33,7 @@ class WikipediaPage(object):
         self.text = self.root.find('revision').find('text').text
         self.title = self.root.find('title').text
         self.id = int(self.root.find('id').text)
+        self.raw_text = etree.tostring(self.root)
 
     @property
     def clean_text(self):
@@ -43,20 +51,27 @@ class WikipediaIndex(object):
     slice_map: Dict[int, List[IndexInfo]]
     slice_next_map: Dict[int, int]
 
+    @property
+    def index_infos(self):
+        return list(self.page_name_map.values())
+
     @classmethod
-    def from_dir(cls, folder, language, use_tqdm=False):
+    def from_dir(cls, folder, language, use_tqdm=False, pickled=False):
         page_name_map = {}
         page_id_map = {}
         slice_map = defaultdict(list)
         slice_next_map = {}
 
         path = os.path.join(folder, f'{language}wiki-latest-pages-articles-multistream-index.txt.bz2')
+        if pickled:
+            with open(path + '.pkl', 'rb') as f:
+                return pickle.load(f)
         prev_offset = -1
         with bz2.open(path) as f:
             for line in tqdm(f, disable=not use_tqdm):
                 line = line.decode().strip()
                 offset, page_id, name = line.split(':', 2)
-                index_info = IndexInfo(name, int(page_id), int(offset))
+                index_info = IndexInfo(name, int(page_id), int(offset), None)
                 page_name_map[name] = index_info
                 page_id_map[index_info.page_id] = index_info
                 slice_map[index_info.offset].append(index_info)
