@@ -27,6 +27,7 @@ def find_tokenizer(name):
     return TOKENIZERS[name]
 
 
-TOKENIZERS = dict(bert_base=bert_base_tokenize,
-                  bert_multilingual=multilingual_bert_tokenize,
-                  nltk=nltk_tokenize)
+TOKENIZERS = {'bert_base': bert_base_tokenize,
+              'bert_multilingual': multilingual_bert_tokenize,
+              'nltk': nltk_tokenize,
+              'bert-base-multilingual-uncased': multilingual_bert_tokenize}

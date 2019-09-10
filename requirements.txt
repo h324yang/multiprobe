@@ -1,7 +1,6 @@
 python3-wget
 dataclasses
 lxml
-git+https://github.com/daemon/pywikiclean
 requests
 tqdm
 mysql-connector
