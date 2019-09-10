@@ -5,3 +5,5 @@ git+https://github.com/daemon/pywikiclean
 requests
 tqdm
 mysql-connector
+pytorch-transformers
+pandas

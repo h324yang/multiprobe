@@ -3,13 +3,15 @@ from dataclasses import dataclass
 from io import BytesIO
 from typing import Dict, List, Optional
 import bz2
+import html
 import pickle
 import re
 import os
 
 from lxml import etree
 from tqdm import tqdm
-import wikiclean
+
+from .wikiclean import clean
 
 
 @dataclass
@@ -38,8 +40,15 @@ class WikipediaPage(object):
     @property
     def clean_text(self):
         if not hasattr(self, 'clean_text_'):
-            self.clean_text_ = wikiclean.clean(self.text)
+            self.clean_text_ = html.unescape(clean(self.text))
         return self.clean_text_
+
+    def cleaned_text(self, **kwargs):
+        return html.unescape(clean(self.text, **kwargs))
+
+    @classmethod
+    def from_string(cls, xml_str):
+        return cls(etree.fromstring(xml_str))
 
 
 @dataclass
