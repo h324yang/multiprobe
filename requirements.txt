@@ -6,3 +6,5 @@ tqdm
 mysql-connector
 pytorch-transformers
 pandas
+pyyaml
+MulticoreTSNE
