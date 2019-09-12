@@ -1,8 +1,16 @@
 import torch
 
 
-def hook_bert(bert_model, layer_idx, hook):
+def hook_bert_layer_output(bert_model, layer_idx, hook):
     bert_model.encoder.layer[layer_idx].register_forward_hook(hook)
+
+
+def hook_bert_layer_attn(bert_model, layer_idx, hook):
+    bert_model.encoder.layer[layer_idx].attention.self.register_forward_hook(hook)
+
+
+def hook_bert_word_embeddings(bert_model, hook):
+    bert_model.embeddings.word_embeddings.register_forward_hook(hook)
 
 
 class SingleInputBundle(object):

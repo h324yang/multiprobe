@@ -6,7 +6,8 @@ import os
 from tqdm import tqdm
 import pandas as pd
 
-from multiprobe.data import WikipediaPage, find_tokenizer
+from multiprobe.data import WikipediaPage
+from multiprobe.utils import find_tokenizer
 
 
 def main():
