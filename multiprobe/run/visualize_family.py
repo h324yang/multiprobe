@@ -17,7 +17,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-file', '-d', required=True)
     parser.add_argument('--embedding-file', '-e', required=True)
-    parser.add_argument('--family-file', '-f', required=True)
+    parser.add_argument('--family-file', '-f', default='data/indoeuro-flat-small.yml')
     parser.add_argument('--method', type=str, default='pca', choices=['tsne', 'pca', 'lda'])
     parser.add_argument('--layer-idx', type=int)
     parser.add_argument('--transpose', action='store_true')
@@ -71,10 +71,8 @@ def main():
     centroids = centroids / 3
     for x_lst in X:
         centroid_distance += (x_lst - centroids).norm(p=2, dim=1)
-    # print(centroid_distance)
     centroid_distance = (centroid_distance / 3).mean()
     print(f'Average centroid distance: {centroid_distance.item()}')
-    return
     X = torch.cat(X).numpy()
 
     print('Fitting...')
