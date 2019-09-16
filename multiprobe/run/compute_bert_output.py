@@ -40,7 +40,7 @@ def main():
     for idx in args.layers:
         output_hook = BundleAveragingHook(reduce=True)
         attn_hook = BundleAveragingHook(reduce=True)
-        hook_bert_layer_attn(model, idx, output_hook)
+        hook_bert_layer_output(model, idx, output_hook)
         hook_bert_layer_attn(model, idx, attn_hook)
         hooks.append((f'output-l{idx}', output_hook))
         hooks.append((f'attn-l{idx}', attn_hook))

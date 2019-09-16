@@ -17,6 +17,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-file', '-d', required=True)
     parser.add_argument('--embedding-file', '-e', required=True)
+    parser.add_argument('--input-type', type=str, required=True, choices=['attn', 'word-emb', 'hidden-emb'])
     parser.add_argument('--family-file', '-f', type=str, default='data/indoeuro-flat.yml')
     parser.add_argument('--method', type=str, default='pca', choices=['tsne', 'pca', 'lda'])
     parser.add_argument('--layer-idx', type=int)
@@ -33,11 +34,15 @@ def main():
     color_map['Slavic'] = (0.1, 0.1, 0.8, 0.2)
     df = pd.read_csv(args.data_file, sep='\t', quoting=3)
     languages = df['language']
-    filename = f'{args.embedding_file}-l{args.layer_idx}.pt' if args.layer_idx is not None else args.embedding_file
+    if args.input_type == 'word-emb':
+        filename = f'{args.embedding_file}-word-emb.pt'
+    else:
+        filename = f'{args.embedding_file}-l{args.layer_idx}.pt'
     X = torch.load(filename)
-    X = X.view(-1, 12, 768 // 12).cuda()
-    if args.subset_range:
-        X = X[:, args.subset_range[0]:args.subset_range[1]]
+    if args.input_type == 'attn':
+        X = X.view(-1, 12, 768 // 12).cuda()
+        if args.subset_range:
+            X = X[:, args.subset_range[0]:args.subset_range[1]]
     mean_x = []
     labels = []
     num_heads = args.subset_range[1] - args.subset_range[0]
@@ -48,7 +53,10 @@ def main():
             label_lst = [language] * num_heads
         else:
             label_lst = [language] * X_filt.size(0)
-            mean_x.extend(X_filt)
+            if args.input_type == 'attn':
+                mean_x.extend(X_filt)
+            else:
+                mean_x.append(X_filt)
         labels.extend(label_lst)
     X = torch.cat(mean_x).cpu().numpy()
     if args.plot_heads:
@@ -76,7 +84,13 @@ def main():
             plt.annotate(txt, (X[idx, 0], X[idx, 1]))
     else:
         plt.legend(lines, ['Germanic', 'Romance', 'Slavic'])
-    plt.title(f'All Languages (Layer {args.layer_idx + 1 if args.layer_idx >= 0 else 12} Attention Heads)')
+    if args.input_type == 'attn':
+        plt.title(f'All Languages (Layer {args.layer_idx + 1 if args.layer_idx >= 0 else 12} Attention Heads)')
+    elif args.input_type == 'word-emb':
+        plt.title(f'All Languages (Word Embeddings)')
+    elif args.input_type == 'hidden-emb':
+        plt.title(f'All Languages (Layer {args.layer_idx + 1 if args.layer_idx >= 0 else 12} Output Embeddings)')
+
     if args.save:
         plt.savefig(f'{args.save}-l{args.layer_idx}.png')
     else:
