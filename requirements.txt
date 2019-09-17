@@ -8,3 +8,5 @@ pytorch-transformers
 pandas
 pyyaml
 MulticoreTSNE
+nltk
+langdetect

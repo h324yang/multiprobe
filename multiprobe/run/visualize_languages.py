@@ -37,7 +37,7 @@ def main():
     if args.input_type == 'word-emb':
         filename = f'{args.embedding_file}-word-emb.pt'
     else:
-        filename = f'{args.embedding_file}-l{args.layer_idx}.pt'
+        filename = f'{args.embedding_file}-{"attn" if args.input_type == "attn" else "output"}-l{args.layer_idx}.pt'
     X = torch.load(filename)
     if args.input_type == 'attn':
         X = X.view(-1, 12, 768 // 12).cuda()
@@ -92,7 +92,7 @@ def main():
         plt.title(f'All Languages (Layer {args.layer_idx + 1 if args.layer_idx >= 0 else 12} Output Embeddings)')
 
     if args.save:
-        plt.savefig(f'{args.save}-l{args.layer_idx}.png')
+        plt.savefig(f'{args.save}.png')
     else:
         plt.show()
 
