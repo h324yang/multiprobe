@@ -36,12 +36,17 @@ class SingleInputBundle(object):
 
 
 def predict_top_k(model: BertForMaskedLM, encode_map, decode_map, input_bundle, k=10):
-    mask_id = encode_map['[MASK]']
     scores, = model(input_bundle.token_ids, input_bundle.segment_ids, input_bundle.input_mask)
     scores_mask = torch.tensor([[x == '[MASK]' for x in sentence] for sentence in input_bundle.padded_sentences])
     predictions = []
+    scores_all = []
+    if k is None:
+        k = scores.size(-1)
     for score_slice, mask in zip(scores, scores_mask):
-        _, indices = torch.topk(score_slice[mask], k)
+        scores_sorted, indices = torch.topk(score_slice[mask], k)
+        prediction_slice = []
         for indices_slice in indices:
-            predictions.append(list(map(decode_map.__getitem__, indices_slice.cpu().tolist())))
-    return predictions
+            prediction_slice.append(list(map(decode_map.__getitem__, indices_slice.cpu().tolist())))
+        scores_all.append(scores_sorted)
+        predictions.append(prediction_slice)
+    return predictions, scores_all
