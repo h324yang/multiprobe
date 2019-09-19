@@ -4,6 +4,7 @@ from functools import lru_cache
 from typing import Dict, List
 import json
 
+from scipy.spatial import distance as spd
 from torch.distributions.categorical import Categorical
 import langdetect
 import numpy as np
@@ -32,6 +33,17 @@ class LanguageFamilyData(object):
         with open(filename) as f:
             family_map = yaml.load(f)
         return cls(family_map)
+
+
+def sum_js(p_list, q_list):
+    dist = 0
+    for p, q in zip(p_list, q_list):
+        js_dist = spd.jensenshannon(p, q, 2.0)
+        # SciPy has numerical issues
+        if np.isnan(js_dist):
+            js_dist = 0
+        dist += js_dist
+    return dist
 
 
 @dataclass

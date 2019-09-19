@@ -7,6 +7,7 @@ import math
 
 from pytorch_transformers import BertForMaskedLM, BertTokenizer
 from tqdm import tqdm
+import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import pandas as pd
@@ -27,11 +28,14 @@ def main():
     parser.add_argument('--bert-model', type=str, default='bert-base-multilingual-uncased')
     parser.add_argument('--mask-prob', type=float, default=0.1)
     parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--parallel', action='store_true')
     args = parser.parse_args()
     random.seed(args.seed)
     np.random.seed(args.seed)
 
     model = BertForMaskedLM.from_pretrained(args.bert_model).cuda()
+    if args.parallel:
+        model = nn.DataParallel(model)
     model.eval()
     tokenizer = BertTokenizer.from_pretrained(args.bert_model)
     df = pd.read_csv(args.data_file, sep='\t', quoting=3)
@@ -54,7 +58,6 @@ def main():
             for idx in arange[:math.ceil(args.mask_prob * len(arange))]: sentence[idx] = '[MASK]'
         bundle = SingleInputBundle(sentences, tokenizer.vocab)
         bundle.cuda()
-        distributions = []
         with torch.no_grad():
             tokens_list_list, scores_list_list = predict_top_k(model, tokenizer.vocab, tokenizer.ids_to_tokens, bundle, k=10)
         for tokens_list, scores_list in zip(tokens_list_list, scores_list_list):
