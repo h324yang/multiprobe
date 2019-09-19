@@ -6,10 +6,13 @@ import json
 
 from scipy.spatial import distance as spd
 from torch.distributions.categorical import Categorical
+from tqdm import tqdm
 import langdetect
 import numpy as np
 import torch
 import yaml
+
+from multiprobe.utils import jsd_
 
 
 class LanguageFamilyData(object):
@@ -37,11 +40,19 @@ class LanguageFamilyData(object):
 
 def sum_js(p_list, q_list):
     dist = 0
-    for p, q in zip(p_list, q_list):
+    for p, q in tqdm(zip(p_list, q_list), position=1):
         js_dist = spd.jensenshannon(p, q, 2.0)
         # SciPy has numerical issues
         if np.isnan(js_dist):
             js_dist = 0
+        dist += js_dist
+    return dist
+
+
+def sum_js_cuda(p_list, q_list):
+    dist = 0
+    for p, q in tqdm(zip(p_list, q_list), position=1):
+        js_dist = jsd_(torch.Tensor(p).cuda(), torch.Tensor(q).cuda()).cpu().item()
         dist += js_dist
     return dist
 
