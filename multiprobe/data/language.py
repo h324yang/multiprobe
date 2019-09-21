@@ -3,16 +3,18 @@ from collections import defaultdict
 from functools import lru_cache
 from typing import Dict, List
 import json
+import warnings
 
 from scipy.spatial import distance as spd
 from torch.distributions.categorical import Categorical
 from tqdm import tqdm
+import joblib
 import langdetect
 import numpy as np
 import torch
 import yaml
 
-from multiprobe.utils import jsd_
+from multiprobe.utils import jsd_, chunk
 
 
 class LanguageFamilyData(object):
@@ -38,15 +40,18 @@ class LanguageFamilyData(object):
         return cls(family_map)
 
 
-def sum_js(p_list, q_list):
-    dist = 0
-    for p, q in tqdm(zip(p_list, q_list), position=1):
-        js_dist = spd.jensenshannon(p, q, 2.0)
-        # SciPy has numerical issues
-        if np.isnan(js_dist):
-            js_dist = 0
-        dist += js_dist
-    return dist
+def safe_js(p, q):
+    js_dist = spd.jensenshannon(p, q, 2.0)
+    # SciPy has numerical issues
+    if np.isnan(js_dist):
+        js_dist = 0
+    return js_dist
+
+
+def sum_js(p_list, q_list, verbose=True):
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore')
+        return sum(safe_js(p, q) for p, q in zip(p_list, q_list))
 
 
 def sum_js_cuda(p_list, q_list):
