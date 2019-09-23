@@ -44,14 +44,9 @@ def main():
 
     for filename in tqdm(args.files, desc='Loading'):
         with open(filename) as f:
-            distribution_list.append(json.load(f))
+            distribution_list.append(np.array(json.load(f)))
 
-    d_arr = np.array(distribution_list)
-    mp_arr = RawArray(c.c_double, int(np.prod(d_arr.shape)))
-    arr = np.frombuffer(mp_arr).reshape(d_arr.shape)
-    np.copyto(arr, d_arr)
-    del distribution_list, d_arr
-
+    arr = np.array(distribution_list, copy=False)
     distance_matrix = np.zeros((len(arr), len(arr)))
     global job
     job = SliceComputingJob(arr)
