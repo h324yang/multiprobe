@@ -13,7 +13,7 @@ TOP_LANG = ["en", "zh", "fr", "ja", "es", "de", "ru", "it"] # "ceb", "pl"
 NUM_TRIPLES = 300
 OUT_FN = "top_5k_meta/triples.jsonl"
 EID_LOG = "top_5k_meta/top_5k.log"
-CORPUS_FN = "top_5k_meta/top_5k.desc"
+CORPUS_FN = "top_5k_meta/top_5k_desc.txt"
 REPORT_EVERY = 100
 FIXED_CENTER_LANG = None # "en"
 
