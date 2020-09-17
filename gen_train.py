@@ -15,6 +15,7 @@ OUT_FN = "top_5k_meta/triples.jsonl"
 EID_LOG = "top_5k_meta/top_5k.log"
 CORPUS_FN = "top_5k_meta/top_5k.desc"
 REPORT_EVERY = 100
+FIXED_CENTER_LANG = None # "en"
 
 
 def main():
@@ -26,19 +27,34 @@ def main():
     print("Read the entity list...")
     eids = read_top_eids(EID_LOG)
     print("Start generating...")
+    target_langs = TOP_LANG.copy()
+    if FIXED_CENTER_LANG:
+        target_langs.remove(FIXED_CENTER_LANG)
     while num_triples > 0:
         try:
             pos_e, neg_e = random.sample(eids, k=2)
-            pos_langs = set(corpus[pos_e].keys()).intersection(TOP_LANG)
-            neg_langs = set(corpus[neg_e].keys()).intersection(TOP_LANG)
-            cur_center_lang, cur_pos_lang = random.sample(pos_langs, k=2)
-            cur_neg_lang = random.sample(neg_langs, k=1)[0]
+            pos_langs = set(corpus[pos_e].keys()).intersection(target_langs)
+            if FIXED_CENTER_LANG:
+                if FIXED_CENTER_LANG in set(corpus[pos_e].keys()):
+                    cur_center_lang = FIXED_CENTER_LANG
+                    cur_pos_lang = random.sample(pos_langs, k=1)[0]
+                else:
+                    print(f"Entity {pos_e} has no {FIXED_CENTER_LANG} edition.")
+                    continue
+            else:
+                cur_center_lang, cur_pos_lang = random.sample(pos_langs, k=2)            
+            
+            # sample pos pair
             center_guid = f"{pos_e}-{cur_center_lang}"
             center_text = corpus[pos_e][cur_center_lang]
             center_record_id = guid_alloc.check(center_guid)
             pos_guid = f"{pos_e}-{cur_pos_lang}"
             pos_text = corpus[pos_e][cur_pos_lang]
             pos_record_id = guid_alloc.check(pos_guid)
+            
+            # get neg sample
+            neg_langs = set(corpus[neg_e].keys()).intersection(target_langs)
+            cur_neg_lang = random.sample(neg_langs, k=1)[0]
             neg_guid = f"{neg_e}-{cur_neg_lang}"
             neg_text = corpus[neg_e][cur_neg_lang]
             neg_record_id = guid_alloc.check(neg_guid)
@@ -63,6 +79,8 @@ def main():
             
         except Exception as e:
             print(f"Exception: {e}")
+    
+    f.close()
 
 if __name__ == "__main__":
     main()
